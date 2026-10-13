@@ -1,0 +1,38 @@
+name: tests-and-packaging
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip build
+      - run: python -m pip install -e .
+      - run: python -m build
+      - name: Test package and offline wheel installation
+        run: |
+          export DPM_TEST_WHEEL="$(python -c 'from pathlib import Path; wheels = list(Path("dist").glob("*.whl")); assert len(wheels) == 1; print(wheels[0].resolve())')"
+          python -W error::ResourceWarning -m unittest discover -s tests -p 'test_*.py' -v
+      - run: python -m compileall -q src
+      - run: douyin-monitor --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-python-${{ matrix.python-version }}
+          path: dist/*
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f packaging/docker/Dockerfile -t dpm:test .
+      - run: docker run --rm --network none --read-only dpm:test --help
+      - run: docker compose -f packaging/docker/compose.yaml config --quiet

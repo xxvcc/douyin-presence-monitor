@@ -1,0 +1,14 @@
+# Explicit maintenance override; never use this for the long-running daemon.
+# docker compose -f compose.yaml -f compose.setup.yaml run --rm -it monitor init
+services:
+  monitor:
+    restart: "no"
+    volumes:
+      - type: bind
+        source: ${DPM_INSTANCE_ROOT:-./instance}/config
+        target: /app/config
+        read_only: false
+        bind:
+          create_host_path: false
+    healthcheck:
+      disable: true

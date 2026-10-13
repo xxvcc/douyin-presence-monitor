@@ -1,0 +1,38 @@
+[Unit]
+Description=Douyin activity estimates and durable Telegram notifications
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=douyin-monitor
+Group=douyin-monitor
+WorkingDirectory=@DPM_HOME@
+Environment=DPM_HOME=@DPM_HOME@ PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+LoadCredential=douyin_session:@DPM_HOME@/config/douyin_session
+LoadCredential=telegram_token:@DPM_HOME@/config/telegram_token
+ExecStart=@DPM_HOME@/bin/douyin-monitor --config @DPM_HOME@/config/config.json --credentials %d run
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=40
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=@DPM_HOME@/data @DPM_HOME@/logs @DPM_HOME@/backups
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target
